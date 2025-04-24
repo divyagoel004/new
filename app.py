@@ -32,7 +32,7 @@ with open('templates/index.html', 'w') as f:
     <div class="container">
         <header>
             <h1>PDF Content Extraction Service</h1>
-           
+            <p>Extract text from any PDF using URL or upload</p>
         </header>
         
         <div class="tabs">
@@ -49,7 +49,15 @@ with open('templates/index.html', 'w') as f:
                 <button id="extract-btn" class="primary-btn">Extract Text</button>
             </div>
             
-           
+            <div id="upload-tab" class="tab-pane">
+                <form id="upload-form" enctype="multipart/form-data">
+                    <div class="input-group">
+                        <label for="pdf-file">Select PDF:</label>
+                        <input type="file" id="pdf-file" accept=".pdf" required>
+                    </div>
+                    <button type="submit" class="primary-btn">Upload & Extract</button>
+                </form>
+            </div>
         </div>
         
         <div class="result-container">
@@ -70,7 +78,13 @@ with open('templates/index.html', 'w') as f:
             </div>
         </div>
 
-        
+        <div class="api-info">
+            <h3>API Integration</h3>
+            <pre class="code-block">
+curl -X POST https://your-domain.com/extract-pdf \\
+  -H "Content-Type: application/json" \\
+  -d '{"pdf_url": "https://example.com/document.pdf"}'</pre>
+        </div>
     </div>
     <script src="/static/js/main.js"></script>
 </body>
@@ -508,48 +522,48 @@ def extract_pdf():
         logger.error(f"Unexpected error: {str(e)}")
         return jsonify({'error': f'An unexpected error occurred: {str(e)}'}), 500
 
-# @app.route('/upload-pdf', methods=['POST'])
-# def upload_pdf():
-#     """
-#     Endpoint to handle PDF file uploads and extract text.
-#     """
-#     try:
-#         if 'file' not in request.files:
-#             return jsonify({'error': 'No file part in the request'}), 400
+@app.route('/upload-pdf', methods=['POST'])
+def upload_pdf():
+    """
+    Endpoint to handle PDF file uploads and extract text.
+    """
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file part in the request'}), 400
             
-#         file = request.files['file']
-#         if file.filename == '':
-#             return jsonify({'error': 'No file selected'}), 400
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
             
-#         if file and file.filename.lower().endswith('.pdf'):
-#             # Extract text from the uploaded PDF
-#             try:
-#                 pdf_file = io.BytesIO(file.read())
-#                 pdf_reader = PyPDF2.PdfReader(pdf_file)
+        if file and file.filename.lower().endswith('.pdf'):
+            # Extract text from the uploaded PDF
+            try:
+                pdf_file = io.BytesIO(file.read())
+                pdf_reader = PyPDF2.PdfReader(pdf_file)
                 
-#                 # Extract text from each page
-#                 text = ""
-#                 for page_num in range(len(pdf_reader.pages)):
-#                     page = pdf_reader.pages[page_num]
-#                     text += page.extract_text() + "\n"
+                # Extract text from each page
+                text = ""
+                for page_num in range(len(pdf_reader.pages)):
+                    page = pdf_reader.pages[page_num]
+                    text += page.extract_text() + "\n"
                 
-#                 logger.info(f"Successfully extracted {len(text)} characters from uploaded PDF")
+                logger.info(f"Successfully extracted {len(text)} characters from uploaded PDF")
                 
-#                 return jsonify({
-#                     'success': True,
-#                     'text': text,
-#                     'pages': len(pdf_reader.pages)
-#                 })
+                return jsonify({
+                    'success': True,
+                    'text': text,
+                    'pages': len(pdf_reader.pages)
+                })
                 
-#             except Exception as e:
-#                 logger.error(f"Error extracting text from uploaded PDF: {str(e)}")
-#                 return jsonify({'error': f'Failed to extract text from PDF: {str(e)}'}), 500
-#         else:
-#             return jsonify({'error': 'File must be a PDF'}), 400
+            except Exception as e:
+                logger.error(f"Error extracting text from uploaded PDF: {str(e)}")
+                return jsonify({'error': f'Failed to extract text from PDF: {str(e)}'}), 500
+        else:
+            return jsonify({'error': 'File must be a PDF'}), 400
     
-#     except Exception as e:
-#         logger.error(f"Unexpected error in file upload: {str(e)}")
-#         return jsonify({'error': f'An unexpected error occurred: {str(e)}'}), 500
+    except Exception as e:
+        logger.error(f"Unexpected error in file upload: {str(e)}")
+        return jsonify({'error': f'An unexpected error occurred: {str(e)}'}), 500
 
 @app.route('/health', methods=['GET'])
 def health_check():
